@@ -11,8 +11,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
+@Preview
 internal fun EveryLiveMainScreen() {
     var selectedTab by remember { mutableIntStateOf(MainTab.Home.ordinal) }
     val currentTab = MainTab.entries[selectedTab]
