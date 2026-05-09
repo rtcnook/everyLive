@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 @Composable
 internal fun EveryLiveMainScreen() {
-    var selectedTab by remember { mutableIntStateOf(MainTab.Home.ordinal) }
-    val currentTab = MainTab.entries[selectedTab]
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentTab = MainTab.fromRoute(navBackStackEntry?.destination?.route)
 
     Scaffold(
         containerColor = PageBackground,
@@ -27,7 +30,15 @@ internal fun EveryLiveMainScreen() {
         bottomBar = {
             BottomTabs(
                 selectedTab = currentTab,
-                onSelect = { selectedTab = it.ordinal },
+                onSelect = { tab ->
+                    navController.navigate(tab.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
             )
         },
     ) { paddingValues ->
@@ -37,11 +48,15 @@ internal fun EveryLiveMainScreen() {
                 .padding(paddingValues)
                 .background(PageBackground),
         ) {
-            when (currentTab) {
-                MainTab.Home -> HomeScreen()
-                MainTab.Live -> LiveScreen()
-                MainTab.Follow -> FollowScreen()
-                MainTab.Mine -> MineScreen()
+            NavHost(
+                navController = navController,
+                startDestination = MainTab.Home.route,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                composable(MainTab.Home.route) { HomeScreen() }
+                composable(MainTab.Live.route) { LiveScreen() }
+                composable(MainTab.Follow.route) { FollowScreen() }
+                composable(MainTab.Mine.route) { MineScreen() }
             }
         }
     }
