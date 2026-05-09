@@ -3,7 +3,6 @@ package com.example.everylive
 import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 
 internal val AppRed = Color(0xFFF2484F)
 internal val DarkRed = Color(0xFFD93D41)
@@ -21,4 +20,4 @@ internal val EveryLiveLightScheme = lightColorScheme(
     onBackground = Color(0xFF6F6F6F),
     onSurface = Color(0xFF6F6F6F),
 )
-internal val EveryLiveTypography = Typography(defaultFontFamily = FontFamily.SansSerif)
+internal val EveryLiveTypography = Typography()
