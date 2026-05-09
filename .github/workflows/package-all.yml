@@ -1,0 +1,99 @@
+name: Package All Platforms
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build Android packages
+        run: ./gradlew packageAndroid
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: |
+            composeApp/build/outputs/apk/**/*.apk
+            composeApp/build/outputs/bundle/**/*.aab
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build Web package
+        run: ./gradlew packageWeb
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: |
+            composeApp/build/dist/wasmJs/productionExecutable
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build iOS frameworks
+        run: ./gradlew packageIosFrameworks
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-frameworks
+          path: |
+            composeApp/build/bin/iosArm64/releaseFramework
+            composeApp/build/bin/iosSimulatorArm64/releaseFramework
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            command: ./gradlew.bat packageDesktopCurrent
+            artifact-path: |
+              composeApp/build/compose/binaries/main/app
+              composeApp/build/compose/binaries/main/msi/*.msi
+          - os: macos-latest
+            name: macos
+            command: ./gradlew packageDesktopCurrent
+            artifact-path: |
+              composeApp/build/compose/binaries/main/app
+              composeApp/build/compose/binaries/main/dmg/*.dmg
+          - os: ubuntu-latest
+            name: linux
+            command: ./gradlew packageDesktopCurrent
+            artifact-path: |
+              composeApp/build/compose/binaries/main/app
+              composeApp/build/compose/binaries/main/deb/*.deb
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build ${{ matrix.name }} packages
+        run: ${{ matrix.command }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.name }}
+          path: ${{ matrix.artifact-path }}
