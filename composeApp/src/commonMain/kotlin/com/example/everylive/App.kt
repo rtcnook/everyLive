@@ -4,38 +4,42 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Badge
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,17 +49,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -65,21 +64,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-private val AppRed = Color(0xFFF2484F)
-private val DarkRed = Color(0xFFD93D41)
-private val AppGray = Color(0xFF8C8C8C)
-private val LightGray = Color(0xFFEDEDED)
-private val PageBackground = Color(0xFFFAFAFA)
-
-private val EveryLiveLightScheme = lightColorScheme(
-    primary = AppRed,
-    secondary = DarkRed,
-    background = PageBackground,
-    surface = Color.White,
-    surfaceVariant = Color(0xFFF3F3F3),
+private val EveryLiveDarkScheme = darkColorScheme(
+    primary = Color(0xFFFF4D6D),
+    secondary = Color(0xFFFFB703),
+    tertiary = Color(0xFF5DD9C1),
+    background = Color(0xFF111218),
+    surface = Color(0xFF1A1B22),
+    surfaceVariant = Color(0xFF252733),
     onPrimary = Color.White,
-    onBackground = Color(0xFF6F6F6F),
-    onSurface = Color(0xFF6F6F6F),
+    onSecondary = Color(0xFF1C1B1F),
+    onBackground = Color.White,
+    onSurface = Color.White,
 )
 
 class AppViewModel : ViewModel() {
@@ -94,7 +89,7 @@ class AppViewModel : ViewModel() {
     }
 
     private suspend fun runStartupTasks() {
-        delay(600)
+        delay(1_200)
     }
 }
 
@@ -104,26 +99,69 @@ data class AppUiState(
 
 private enum class MainTab(
     val label: String,
+    val icon: String,
 ) {
-    Home("首页"),
-    Live("直播"),
-    Follow("关注"),
-    Mine("我的"),
+    Home("首页", "⌂"),
+    Live("直播", "▶"),
+    Follow("关注", "♡"),
+    Mine("我的", "人"),
 }
 
-private data class MineMenuItem(
-    val icon: String,
+private data class FeedItem(
     val title: String,
+    val creator: String,
+    val tag: String,
+    val heat: String,
+    val accent: Color,
 )
 
-private val mineMenuItems = listOf(
-    MineMenuItem("★", "我的星光"),
-    MineMenuItem("☰", "星光贡献榜"),
-    MineMenuItem("◷", "观看历史"),
-    MineMenuItem("◌", "我的等级"),
-    MineMenuItem("➤", "任务中心"),
-    MineMenuItem("☍", "游戏中心"),
-    MineMenuItem("⚙", "设置"),
+private data class LiveRoom(
+    val title: String,
+    val anchor: String,
+    val viewers: String,
+    val category: String,
+    val accent: Color,
+)
+
+private data class ProfileAction(
+    val title: String,
+    val subtitle: String,
+)
+
+private val hotSearchItems = listOf(
+    FeedItem("城市夜跑直播间突然爆火", "同城热榜", "热搜", "128.6w", Color(0xFFFF4D6D)),
+    FeedItem("春日穿搭挑战赛", "潮流观察员", "挑战", "92.4w", Color(0xFFFFB703)),
+    FeedItem("深夜电台：今天也要好好生活", "小满 FM", "治愈", "65.8w", Color(0xFF5DD9C1)),
+    FeedItem("新歌首唱现场回放", "音乐现场", "音乐", "51.2w", Color(0xFF8E7CFF)),
+)
+
+private val recommendItems = listOf(
+    FeedItem("根据你的观看偏好推荐：户外露营", "阿森在路上", "算法推荐", "36.1w", Color(0xFF42A5F5)),
+    FeedItem("三分钟学会直播间布光", "设备研究所", "教程", "18.7w", Color(0xFFFF7043)),
+    FeedItem("萌宠午休观察", "猫咪便利店", "宠物", "74.9w", Color(0xFFAED581)),
+    FeedItem("今日游戏高能片段合集", "全能玩家", "游戏", "88.0w", Color(0xFFBA68C8)),
+)
+
+private val liveRooms = listOf(
+    LiveRoom("海边日落陪你下班", "橙子", "12.8w", "户外", Color(0xFFFF8A65)),
+    LiveRoom("峡谷五排冲分中", "北川", "8.4w", "游戏", Color(0xFF7986CB)),
+    LiveRoom("点歌台营业到零点", "阿遥", "5.6w", "音乐", Color(0xFFF06292)),
+    LiveRoom("一起做晚饭", "小青", "3.2w", "生活", Color(0xFF4DB6AC)),
+    LiveRoom("新手健身答疑", "卡卡教练", "2.9w", "运动", Color(0xFFFFB74D)),
+    LiveRoom("二次元闲聊大会", "米粒", "6.7w", "聊天", Color(0xFF9575CD)),
+)
+
+private val followedVideos = listOf(
+    FeedItem("你关注的阿森更新了旅行 vlog", "阿森在路上", "已关注", "18分钟前", Color(0xFF42A5F5)),
+    FeedItem("猫咪便利店发布了新视频", "猫咪便利店", "已关注", "42分钟前", Color(0xFFAED581)),
+    FeedItem("设备研究所：直播收音避坑", "设备研究所", "已关注", "2小时前", Color(0xFFFF7043)),
+)
+
+private val profileActions = listOf(
+    ProfileAction("账号信息", "昵称、头像、手机号与实名认证"),
+    ProfileAction("App 设置", "通知、播放、清晰度和青少年模式"),
+    ProfileAction("隐私设置", "关注列表、浏览记录和黑名单"),
+    ProfileAction("清理缓存", "释放图片、视频预加载缓存"),
 )
 
 @Composable
@@ -132,7 +170,7 @@ fun App() {
     val appViewModel = viewModel { AppViewModel() }
     val uiState by appViewModel.uiState.collectAsState()
 
-    MaterialTheme(colorScheme = EveryLiveLightScheme) {
+    MaterialTheme(colorScheme = EveryLiveDarkScheme) {
         AnimatedContent(
             targetState = uiState.isLoading,
             transitionSpec = { fadeIn() togetherWith fadeOut() },
@@ -152,15 +190,41 @@ private fun SplashScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
-            .safeContentPadding(),
-        contentAlignment = Alignment.Center,
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(Color(0xFF21111F), Color(0xFF111218)),
+                ),
+            )
+            .safeContentPadding()
+            .padding(28.dp),
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            BrandLogo(modifier = Modifier.height(58.dp))
-            Spacer(Modifier.height(18.dp))
-            Text("正在初始化...", color = AppGray, fontSize = 18.sp)
+        Column(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(92.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFFFF4D6D), Color(0xFFFFB703)),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("全", style = MaterialTheme.typography.displayMedium, fontWeight = FontWeight.Black)
+            }
+            Text("全面直播", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
+            Text("正在初始化配置、账号和推荐流", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f))
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(0.62f))
         }
+        Text(
+            text = "EveryLive",
+            modifier = Modifier.align(Alignment.BottomCenter),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.44f),
+        )
     }
 }
 
@@ -170,24 +234,24 @@ private fun EveryLiveMainScreen() {
     val currentTab = MainTab.entries[selectedTab]
 
     Scaffold(
-        containerColor = PageBackground,
-        floatingActionButton = {
-            if (currentTab == MainTab.Home || currentTab == MainTab.Mine) {
-                MailFab()
-            }
-        },
         bottomBar = {
-            BottomTabs(
-                selectedTab = currentTab,
-                onSelect = { selectedTab = it.ordinal },
-            )
+            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                MainTab.entries.forEach { tab ->
+                    NavigationBarItem(
+                        selected = currentTab == tab,
+                        onClick = { selectedTab = tab.ordinal },
+                        icon = { Text(tab.icon, fontWeight = FontWeight.Bold) },
+                        label = { Text(tab.label) },
+                    )
+                }
+            }
         },
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .background(PageBackground),
+                .background(MaterialTheme.colorScheme.background)
+                .padding(paddingValues),
         ) {
             when (currentTab) {
                 MainTab.Home -> HomeScreen()
@@ -201,562 +265,200 @@ private fun EveryLiveMainScreen() {
 
 @Composable
 private fun HomeScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground),
-    ) {
-        HomeTopBar()
-        Box(modifier = Modifier.fillMaxSize().background(PageBackground))
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabs = listOf("热搜", "算法推荐")
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        PageHeader(title = "首页", subtitle = "发现正在发生的精彩内容")
+        TabRow(selectedTabIndex = selectedTab) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { selectedTab = index },
+                    text = { Text(title) },
+                )
+            }
+        }
+        val items = if (selectedTab == 0) hotSearchItems else recommendItems
+        FeedList(items = items)
     }
 }
 
 @Composable
 private fun LiveScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground),
-    ) {
-        TitleTopBar(title = "直播")
-        EmptyLiveState()
+    Column(modifier = Modifier.fillMaxSize()) {
+        PageHeader(title = "直播", subtitle = "推荐主播正在开播")
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(liveRooms) { room ->
+                LiveCard(room)
+            }
+        }
     }
 }
 
 @Composable
 private fun FollowScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground),
-    ) {
-        TitleTopBar(title = "关注")
-        LoginRequiredState()
+    Column(modifier = Modifier.fillMaxSize()) {
+        PageHeader(title = "关注", subtitle = "你关注的博主新动态")
+        FeedList(items = followedVideos)
     }
 }
 
 @Composable
 private fun MineScreen() {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { MineHeader() }
-        item { WalletRow() }
-        itemsIndexed(mineMenuItems) { index, item ->
-            if (index == 1 || index == 5) {
-                Spacer(
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = RoundedCornerShape(26.dp),
+            ) {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(22.dp)
-                        .background(LightGray),
-                )
-            }
-            MineMenuRow(item)
-        }
-        item {
-            Spacer(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(72.dp)
-                    .background(LightGray),
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeTopBar() {
-    Surface(color = Color.White, shadowElevation = 3.dp) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(98.dp)
-                    .padding(horizontal = 22.dp),
-            ) {
-                SearchIcon(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .align(Alignment.CenterStart),
-                    color = AppGray,
-                )
-                BrandLogo(
-                    modifier = Modifier
-                        .height(48.dp)
-                        .align(Alignment.Center),
-                )
-                MailIcon(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .align(Alignment.CenterEnd),
-                    color = AppGray,
-                )
-            }
-            HorizontalDivider(color = Color(0xFFF0F0F0), thickness = 1.dp)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .width(92.dp)
-                        .fillMaxHeight()
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    MenuIcon(modifier = Modifier.size(34.dp), color = Color(0xFF9E9E9E))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun TitleTopBar(title: String) {
-    Surface(color = Color.White, shadowElevation = 1.dp) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(98.dp)
-                .padding(horizontal = 22.dp),
-        ) {
-            SearchIcon(
-                modifier = Modifier
-                    .size(42.dp)
-                    .align(Alignment.CenterStart),
-                color = AppGray,
-            )
-            Text(
-                text = title,
-                modifier = Modifier.align(Alignment.Center),
-                color = Color(0xFF6F6F6F),
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Normal,
-            )
-            MailIcon(
-                modifier = Modifier
-                    .size(38.dp)
-                    .align(Alignment.CenterEnd),
-                color = AppGray,
-            )
-        }
-    }
-}
-
-@Composable
-private fun LoginRequiredState() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = (-46).dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            UserLoginArt(modifier = Modifier.size(154.dp))
-            Spacer(Modifier.height(30.dp))
-            Text("当前未登录", color = Color(0xFFA4A4A4), fontSize = 26.sp)
-            Spacer(Modifier.height(34.dp))
-            OutlinedButton(
-                onClick = {},
-                modifier = Modifier
-                    .height(52.dp)
-                    .width(300.dp),
-                shape = RoundedCornerShape(50),
-                border = BorderStroke(1.dp, Color(0xFFC95B62)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC95B62)),
-            ) {
-                Text("点击登录，精彩不再错过", fontSize = 24.sp)
-            }
-        }
-    }
-}
-
-@Composable
-private fun EmptyLiveState() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .offset(y = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            LiveFailArt(modifier = Modifier.size(170.dp))
-            Text("加载失败...", color = Color(0xFF777777), fontSize = 26.sp)
-        }
-    }
-}
-
-@Composable
-private fun MineHeader() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(318.dp)
-            .background(
-                Brush.radialGradient(
-                    colors = listOf(Color(0xFFFF6E73), AppRed, DarkRed),
-                    center = Offset(560f, 120f),
-                    radius = 820f,
-                ),
-            ),
-    ) {
-        HalftonePattern(modifier = Modifier.matchParentSize())
-        PencilIcon(
-            modifier = Modifier
-                .size(42.dp)
-                .align(Alignment.TopStart)
-                .padding(start = 10.dp, top = 14.dp),
-            color = Color.White,
-        )
-        MailIcon(
-            modifier = Modifier
-                .size(42.dp)
-                .align(Alignment.TopEnd)
-                .padding(end = 18.dp, top = 18.dp),
-            color = Color.White,
-        )
-        Column(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(114.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFFE2E2E2))
-                    .border(3.dp, Color.White, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text("↯", color = Color(0xFF969696), fontSize = 62.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.height(34.dp))
-            Text("点击登录", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
-        }
-        Row(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .height(76.dp)
-                .background(DarkRed.copy(alpha = 0.72f)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MineStat(modifier = Modifier.weight(1f), label = "关注")
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(42.dp)
-                    .background(Color(0xFFB92B30)),
-            )
-            MineStat(modifier = Modifier.weight(1f), label = "粉丝")
-        }
-    }
-}
-
-@Composable
-private fun MineStat(modifier: Modifier, label: String) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text("0", color = Color.White, fontSize = 26.sp)
-        Text(label, color = Color.White, fontSize = 25.sp, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun WalletRow() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(76.dp)
-            .padding(horizontal = 30.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text("🪙", fontSize = 30.sp)
-        Text("0", modifier = Modifier.padding(start = 14.dp), color = Color(0xFF666666), fontSize = 25.sp)
-        Spacer(Modifier.width(34.dp))
-        Text("🍏", fontSize = 30.sp)
-        Text("0", modifier = Modifier.padding(start = 14.dp), color = Color(0xFF666666), fontSize = 25.sp)
-        Spacer(Modifier.weight(1f))
-        OutlinedButton(
-            onClick = {},
-            modifier = Modifier
-                .height(48.dp)
-                .width(112.dp),
-            shape = RoundedCornerShape(50),
-            border = BorderStroke(1.dp, Color(0xFFC95B62)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC95B62)),
-        ) {
-            Text("充值", fontSize = 22.sp)
-        }
-    }
-    HorizontalDivider(color = LightGray)
-}
-
-@Composable
-private fun MineMenuRow(item: MineMenuItem) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(78.dp)
-            .background(Color.White)
-            .padding(horizontal = 30.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(item.icon, color = AppGray, fontSize = 34.sp)
-        Text(
-            text = item.title,
-            modifier = Modifier.padding(start = 22.dp),
-            color = Color(0xFF777777),
-            fontSize = 26.sp,
-        )
-        Spacer(Modifier.weight(1f))
-        Text("›", color = AppGray, fontSize = 36.sp)
-    }
-    HorizontalDivider(color = LightGray, modifier = Modifier.padding(start = 30.dp))
-}
-
-@Composable
-private fun BottomTabs(selectedTab: MainTab, onSelect: (MainTab) -> Unit) {
-    Surface(color = Color.White, shadowElevation = 4.dp) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(92.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MainTab.entries.forEach { tab ->
-                val selected = selectedTab == tab
-                val color = if (selected) AppRed else Color(0xFFA7A7A7)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onSelect(tab) }
-                        .padding(top = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Brush.linearGradient(listOf(Color(0xFFFF4D6D), Color(0xFF8E7CFF)))),
                         contentAlignment = Alignment.Center,
                     ) {
-                        BottomTabIcon(tab = tab, selected = selected, color = color)
+                        Text("我", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(Modifier.height(4.dp))
-                    Text(tab.label, color = color, fontSize = 20.sp)
+                    Spacer(Modifier.width(14.dp))
+                    Column {
+                        Text("全面直播用户", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("账号信息 · 创作者中心 · 钱包", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f))
+                    }
                 }
             }
+        }
+        items(profileActions) { action ->
+            ProfileActionRow(action)
         }
     }
 }
 
 @Composable
-private fun BottomTabIcon(tab: MainTab, selected: Boolean, color: Color) {
-    when (tab) {
-        MainTab.Home -> HomeIcon(Modifier.fillMaxSize(), color)
-        MainTab.Live -> TvIcon(Modifier.fillMaxSize(), color)
-        MainTab.Follow -> HeartIcon(Modifier.fillMaxSize(), color)
-        MainTab.Mine -> UserCircleIcon(Modifier.fillMaxSize(), color, selected)
-    }
-}
-
-@Composable
-private fun MailFab() {
-    FloatingActionButton(
-        onClick = {},
-        modifier = Modifier.size(78.dp),
-        shape = CircleShape,
-        containerColor = AppRed,
-        contentColor = Color.White,
+private fun PageHeader(title: String, subtitle: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
-        MailIcon(modifier = Modifier.size(38.dp), color = Color.White)
+        Text(title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text(subtitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.66f))
     }
 }
 
 @Composable
-private fun BrandLogo(modifier: Modifier = Modifier) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                val stroke = Stroke(width = 5.dp.toPx(), join = StrokeJoin.Round)
-                val path = Path().apply {
-                    moveTo(size.width * 0.08f, size.height * 0.18f)
-                    lineTo(size.width * 0.72f, size.height * 0.18f)
-                    lineTo(size.width * 0.72f, size.height * 0.72f)
-                    lineTo(size.width * 0.08f, size.height * 0.72f)
-                    close()
+private fun FeedList(items: List<FeedItem>) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(items) { item ->
+            FeedCard(item)
+        }
+    }
+}
+
+@Composable
+private fun FeedCard(item: FeedItem) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+    ) {
+        Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Thumbnail(accent = item.accent, modifier = Modifier.size(86.dp))
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Badge(containerColor = item.accent) { Text(item.tag) }
+                    Spacer(Modifier.width(8.dp))
+                    Text(item.heat, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.58f))
                 }
-                drawPath(path, AppRed, style = stroke)
-                val play = Path().apply {
-                    moveTo(size.width * 0.36f, size.height * 0.33f)
-                    lineTo(size.width * 0.58f, size.height * 0.45f)
-                    lineTo(size.width * 0.36f, size.height * 0.58f)
-                    close()
-                }
-                drawPath(play, AppRed)
+                Text(item.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(item.creator, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.68f))
             }
         }
-        Text("全民直播", color = AppRed, fontSize = 30.sp, fontWeight = FontWeight.Black)
     }
 }
 
 @Composable
-private fun SearchIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        drawCircle(
-            color = color,
-            radius = size.minDimension * 0.31f,
-            center = Offset(size.width * 0.42f, size.height * 0.42f),
-            style = Stroke(width = 4.dp.toPx()),
-        )
-        drawLine(
-            color = color,
-            start = Offset(size.width * 0.64f, size.height * 0.64f),
-            end = Offset(size.width * 0.9f, size.height * 0.9f),
-            strokeWidth = 4.dp.toPx(),
-            cap = StrokeCap.Round,
-        )
-    }
-}
-
-@Composable
-private fun MailIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        val stroke = Stroke(width = 3.4.dp.toPx(), join = StrokeJoin.Round)
-        val left = size.width * 0.12f
-        val top = size.height * 0.22f
-        val right = size.width * 0.88f
-        val bottom = size.height * 0.78f
-        drawRect(color, topLeft = Offset(left, top), size = androidx.compose.ui.geometry.Size(right - left, bottom - top), style = stroke)
-        drawLine(color, Offset(left, top), Offset(size.width * 0.5f, size.height * 0.55f), stroke.width, cap = StrokeCap.Round)
-        drawLine(color, Offset(right, top), Offset(size.width * 0.5f, size.height * 0.55f), stroke.width, cap = StrokeCap.Round)
-    }
-}
-
-@Composable
-private fun MenuIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        repeat(3) { index ->
-            val y = size.height * (0.25f + index * 0.25f)
-            drawLine(color, Offset(size.width * 0.1f, y), Offset(size.width * 0.9f, y), 4.dp.toPx(), cap = StrokeCap.Round)
+private fun LiveCard(room: LiveRoom) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(22.dp),
+    ) {
+        Column {
+            Box {
+                Thumbnail(accent = room.accent, modifier = Modifier.fillMaxWidth().aspectRatio(0.86f))
+                Badge(
+                    modifier = Modifier.padding(10.dp).align(Alignment.TopStart),
+                    containerColor = Color(0xFFFF1744),
+                ) {
+                    Text("LIVE")
+                }
+                Text(
+                    text = room.viewers,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(10.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.Black.copy(alpha = 0.48f))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+            }
+            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(room.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
+                Text("${room.anchor} · ${room.category}", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
 
 @Composable
-private fun HomeIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        val roof = Path().apply {
-            moveTo(size.width * 0.1f, size.height * 0.48f)
-            lineTo(size.width * 0.5f, size.height * 0.12f)
-            lineTo(size.width * 0.9f, size.height * 0.48f)
-            lineTo(size.width * 0.78f, size.height * 0.48f)
-            lineTo(size.width * 0.78f, size.height * 0.88f)
-            lineTo(size.width * 0.58f, size.height * 0.88f)
-            lineTo(size.width * 0.58f, size.height * 0.62f)
-            lineTo(size.width * 0.42f, size.height * 0.62f)
-            lineTo(size.width * 0.42f, size.height * 0.88f)
-            lineTo(size.width * 0.22f, size.height * 0.88f)
-            lineTo(size.width * 0.22f, size.height * 0.48f)
-            close()
-        }
-        drawPath(roof, color)
-    }
-}
-
-@Composable
-private fun TvIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        val stroke = Stroke(width = 4.dp.toPx(), join = StrokeJoin.Round, cap = StrokeCap.Round)
-        drawRoundRect(color, topLeft = Offset(size.width * 0.18f, size.height * 0.26f), size = androidx.compose.ui.geometry.Size(size.width * 0.64f, size.height * 0.58f), cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()), style = stroke)
-        drawLine(color, Offset(size.width * 0.36f, size.height * 0.26f), Offset(size.width * 0.18f, size.height * 0.08f), 4.dp.toPx(), cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.64f, size.height * 0.26f), Offset(size.width * 0.82f, size.height * 0.08f), 4.dp.toPx(), cap = StrokeCap.Round)
-        val play = Path().apply {
-            moveTo(size.width * 0.43f, size.height * 0.43f)
-            lineTo(size.width * 0.61f, size.height * 0.55f)
-            lineTo(size.width * 0.43f, size.height * 0.67f)
-            close()
-        }
-        drawPath(play, color)
-    }
-}
-
-@Composable
-private fun HeartIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        val path = Path().apply {
-            moveTo(size.width * 0.5f, size.height * 0.84f)
-            cubicTo(size.width * 0.15f, size.height * 0.58f, size.width * 0.1f, size.height * 0.34f, size.width * 0.28f, size.height * 0.22f)
-            cubicTo(size.width * 0.4f, size.height * 0.14f, size.width * 0.5f, size.height * 0.24f, size.width * 0.5f, size.height * 0.34f)
-            cubicTo(size.width * 0.5f, size.height * 0.24f, size.width * 0.6f, size.height * 0.14f, size.width * 0.72f, size.height * 0.22f)
-            cubicTo(size.width * 0.9f, size.height * 0.34f, size.width * 0.85f, size.height * 0.58f, size.width * 0.5f, size.height * 0.84f)
-            close()
-        }
-        drawPath(path, color)
-    }
-}
-
-@Composable
-private fun UserCircleIcon(modifier: Modifier, color: Color, selected: Boolean) {
-    Canvas(modifier = modifier) {
-        val strokeWidth = if (selected) 4.dp.toPx() else 3.5.dp.toPx()
-        drawCircle(color, radius = size.minDimension * 0.42f, center = Offset(size.width / 2, size.height / 2), style = Stroke(width = strokeWidth))
-        drawCircle(color, radius = size.minDimension * 0.14f, center = Offset(size.width / 2, size.height * 0.43f))
-        drawOval(color, topLeft = Offset(size.width * 0.28f, size.height * 0.58f), size = androidx.compose.ui.geometry.Size(size.width * 0.44f, size.height * 0.2f))
-    }
-}
-
-@Composable
-private fun UserLoginArt(modifier: Modifier) {
+private fun Thumbnail(accent: Color, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
-            .clip(CircleShape)
-            .background(Brush.radialGradient(listOf(Color(0xFFFFC8C9), Color(0xFFFF8D91)))),
+            .clip(RoundedCornerShape(18.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(accent, accent.copy(alpha = 0.45f), Color(0xFF20222C)),
+                ),
+            ),
         contentAlignment = Alignment.Center,
     ) {
-        Canvas(modifier = Modifier.size(100.dp)) {
-            drawCircle(Color(0xFFFFCACC), radius = size.width * 0.2f, center = Offset(size.width / 2, size.height * 0.34f))
-            drawOval(Color(0xFFFFCACC), topLeft = Offset(size.width * 0.14f, size.height * 0.58f), size = androidx.compose.ui.geometry.Size(size.width * 0.72f, size.height * 0.36f))
-        }
+        Text("▶", style = MaterialTheme.typography.headlineMedium, color = Color.White.copy(alpha = 0.86f))
     }
 }
 
 @Composable
-private fun LiveFailArt(modifier: Modifier) {
-    Canvas(modifier = modifier) {
-        val pale = Color(0xFFE7E7E7)
-        drawCircle(pale.copy(alpha = 0.7f), radius = size.minDimension * 0.34f, center = Offset(size.width * 0.44f, size.height * 0.62f))
-        drawRect(pale, topLeft = Offset(size.width * 0.34f, size.height * 0.15f), size = androidx.compose.ui.geometry.Size(size.width * 0.48f, size.height * 0.42f))
-        drawLine(Color.White, Offset(size.width * 0.45f, size.height * 0.33f), Offset(size.width * 0.7f, size.height * 0.33f), 5.dp.toPx(), cap = StrokeCap.Round)
-        drawLine(Color.White, Offset(size.width * 0.5f, size.height * 0.43f), Offset(size.width * 0.65f, size.height * 0.43f), 5.dp.toPx(), cap = StrokeCap.Round)
-    }
-}
-
-@Composable
-private fun PencilIcon(modifier: Modifier, color: Color) {
-    Canvas(modifier = modifier) {
-        drawLine(color, Offset(size.width * 0.2f, size.height * 0.82f), Offset(size.width * 0.78f, size.height * 0.24f), 4.dp.toPx(), cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.64f, size.height * 0.1f), Offset(size.width * 0.9f, size.height * 0.36f), 4.dp.toPx(), cap = StrokeCap.Round)
-        drawLine(color, Offset(size.width * 0.12f, size.height * 0.9f), Offset(size.width * 0.28f, size.height * 0.82f), 4.dp.toPx(), cap = StrokeCap.Round)
-    }
-}
-
-@Composable
-private fun HalftonePattern(modifier: Modifier) {
-    Canvas(modifier = modifier) {
-        val dotColor = Color(0xFFB6272E).copy(alpha = 0.18f)
-        val step = 18.dp.toPx()
-        var x = -size.width * 0.1f
-        while (x < size.width * 1.1f) {
-            var y = 0f
-            while (y < size.height) {
-                val normalized = kotlin.math.abs(x - size.width / 2) / (size.width / 2)
-                val radius = (2.5f + normalized * 4f).dp.toPx()
-                drawCircle(dotColor, radius = radius, center = Offset(x, y))
-                y += step
-            }
-            x += step
+private fun ProfileActionRow(action: ProfileAction) {
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Text(action.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Spacer(Modifier.height(5.dp))
+            Text(action.subtitle, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.62f))
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
         }
     }
 }
