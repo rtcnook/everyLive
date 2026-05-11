@@ -1,30 +1,22 @@
 # EveryLive Server
 
-This repository contains the EveryLive Compose Multiplatform client and a Java Spring Boot backend.
-The Compose UI is shared across Android, iOS, Web, and desktop targets, while [`server`](./server) is a plain Java backend module intended for Java/Spring engineers.
+This repository is now configured to use the Spring Boot server in [`server`](./server) as the active Gradle project.
+The previous Kotlin Multiplatform/Compose modules are still present in the repository history and working tree, but they are no longer included from `settings.gradle.kts`.
 
 ## Project layout
 
 ```text
 .
-├── composeApp/              # Shared Compose Multiplatform UI for Android, Web, Desktop, and iOS framework output
-├── iosApp/                  # Native iOS app shell that hosts the shared Compose UI
-├── server/                  # Java Spring Boot backend application for Java/Spring engineers
-│   ├── src/main/java/       # Spring Boot entry point and REST controllers
+├── server/                  # Active Spring Boot application
+│   ├── src/main/kotlin/     # Spring Boot entry point and REST controllers
 │   ├── src/main/resources/  # Spring Boot configuration
-│   └── src/test/java/       # Spring Boot tests
-└── shared/                  # Shared Kotlin code used by the multiplatform client
+│   └── src/test/kotlin/     # Spring Boot tests
+├── composeApp/              # Legacy client code, not included in Gradle build
+├── shared/                  # Legacy shared KMP code, not included in Gradle build
+└── iosApp/                  # Legacy iOS shell, not included in Gradle build
 ```
 
-## Backend Technology Stack
-
-The `server` module intentionally uses Java source files and Spring Boot conventions so Java backend engineers do not need to read or maintain Kotlin backend code.
-
-- Java 17
-- Spring Boot Web
-- JUnit 5 / Spring Boot Test
-
-## Build and Run Server
+## Run the server
 
 macOS/Linux:
 
@@ -45,7 +37,7 @@ The server starts on port `8080` by default.
 - `GET /` returns a plain-text server status message.
 - `GET /health` returns a simple health payload.
 
-## Test Server
+## Test
 
 macOS/Linux:
 
@@ -58,28 +50,3 @@ Windows:
 ```shell
 .\gradlew.bat :server:test
 ```
-
-
-## Build and Run Android Application
-
-Use the Android Studio run configuration or build directly:
-
-```shell
-./gradlew :composeApp:assembleDebug
-```
-
-## Build and Run Desktop Application
-
-```shell
-./gradlew :composeApp:run
-```
-
-## Build and Run Web Application
-
-```shell
-./gradlew :composeApp:wasmJsBrowserDevelopmentRun
-```
-
-## Build and Run iOS Application
-
-Open [`iosApp`](./iosApp) in Xcode and run the native shell app.
