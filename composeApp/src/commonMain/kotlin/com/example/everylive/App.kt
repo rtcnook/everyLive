@@ -17,10 +17,7 @@ fun App() {
     val appViewModel = viewModel { AppViewModel() }
     val uiState by appViewModel.uiState.collectAsState()
 
-    MaterialTheme(
-        colorScheme = EveryLiveLightScheme,
-        typography = EveryLiveTypography,
-    ) {
+    MaterialTheme(colorScheme = EveryLiveLightScheme) {
         AnimatedContent(
             targetState = uiState.isLoading,
             transitionSpec = { fadeIn() togetherWith fadeOut() },

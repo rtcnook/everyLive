@@ -22,12 +22,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-@Preview
 internal fun BrandLogo(modifier: Modifier = Modifier) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(38.dp), contentAlignment = Alignment.Center) {
@@ -50,7 +48,7 @@ internal fun BrandLogo(modifier: Modifier = Modifier) {
                 drawPath(play, AppRed)
             }
         }
-        Text("大家直播", color = AppRed, fontSize = 30.sp, fontWeight = FontWeight.Black)
+        Text("全民直播", color = AppRed, fontSize = 30.sp, fontWeight = FontWeight.Black)
     }
 }
 
@@ -105,8 +103,7 @@ internal fun MailIcon(modifier: Modifier, color: Color) {
 }
 
 @Composable
-@Preview
-internal fun MenuIcon(modifier: Modifier = Modifier.size(34.dp), color: Color = Color(0xFF9E9E9E), ) {
+internal fun MenuIcon(modifier: Modifier, color: Color) {
     Canvas(modifier = modifier) {
         repeat(3) { index ->
             val y = size.height * (0.25f + index * 0.25f)

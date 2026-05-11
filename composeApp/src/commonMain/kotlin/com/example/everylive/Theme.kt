@@ -1,6 +1,5 @@
 package com.example.everylive
 
-import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 
@@ -20,4 +19,3 @@ internal val EveryLiveLightScheme = lightColorScheme(
     onBackground = Color(0xFF6F6F6F),
     onSurface = Color(0xFF6F6F6F),
 )
-internal val EveryLiveTypography = Typography()

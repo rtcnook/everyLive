@@ -18,12 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-@Preview
 internal fun FollowScreen() {
     Column(
         modifier = Modifier
@@ -57,7 +55,7 @@ private fun LoginRequiredState() {
                 border = BorderStroke(1.dp, Color(0xFFC95B62)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC95B62)),
             ) {
-                Text("点击登录，精彩不再错过", fontSize = 22.sp)
+                Text("点击登录，精彩不再错过", fontSize = 24.sp)
             }
         }
     }
