@@ -1,5 +1,8 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    java
+    alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.kotlinSpring)
     alias(libs.plugins.springBoot)
     alias(libs.plugins.springDependencyManagement)
 }
@@ -15,8 +18,17 @@ java {
 
 dependencies {
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.kotlin.reflect)
 
     testImplementation(libs.spring.boot.starter.test)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        freeCompilerArgs.add("-Xjsr305=strict")
+        jvmTarget.set(JvmTarget.JVM_17)
+    }
 }
 
 tasks.withType<Test>().configureEach {
