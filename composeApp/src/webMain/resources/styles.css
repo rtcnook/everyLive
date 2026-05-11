@@ -5,3 +5,14 @@ html, body {
     padding: 0;
     overflow: hidden;
 }
+
+html, body, canvas {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", "Source Han Sans SC", Arial, sans-serif;
+}
+
+body {
+    text-align: center;
+    align-content: center;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
