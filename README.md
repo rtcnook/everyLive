@@ -1,95 +1,94 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM), Server.
+# EveryLive
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-    folder is the appropriate location.
+This repository contains the EveryLive Compose Multiplatform client and a Java Spring Boot backend.
+The project is split into three active Gradle modules: `composeApp` for shared UI, `shared` for cross-platform business/domain logic, and `server` for the plain Java Spring Boot backend used by Java/Spring engineers.
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+## Project layout
 
-* [/server](./server/src/main/kotlin) is for the Ktor server application.
+```text
+.
+├── composeApp/              # Shared Compose Multiplatform UI only
+├── shared/                  # Shared Kotlin business/domain logic used by Compose targets
+├── iosApp/                  # Native iOS app shell that hosts the shared Compose UI
+├── server/                  # Java Spring Boot backend application for Java/Spring engineers
+│   ├── src/main/java/       # Spring Boot entry point and REST controllers
+│   ├── src/main/resources/  # Spring Boot configuration
+│   └── src/test/java/       # Spring Boot tests
+```
 
-* [/shared](./shared/src) is for the code that will be shared between all targets in the project.
-  The most important subfolder is [commonMain](./shared/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
 
-### Build and Run Android Application
+## Module Responsibilities
 
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:assembleDebug
-  ```
+- `composeApp`: shared Compose Multiplatform UI screens, theme, navigation, and UI components.
+- `shared`: platform-independent Kotlin logic and models that can be reused by Android, iOS, Web, and desktop clients.
+- `server`: Java Spring Boot backend API used by the client; keep this module Java-friendly for backend engineers.
 
-### Build and Run Desktop (JVM) Application
+`composeApp` depends on `shared`, while `server` is an independent backend module that communicates with clients over HTTP APIs.
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
+## Backend Technology Stack
 
-### Build and Run Server
+The `server` module intentionally uses Java source files and Spring Boot conventions so Java backend engineers do not need to read or maintain Kotlin backend code.
 
-To build and run the development version of the server, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :server:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :server:run
-  ```
+- Java 17
+- Spring Boot Web
+- JUnit 5 / Spring Boot Test
 
-### Build and Run Web Application
+## Build and Run Server
 
-To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
-- for the Wasm target (faster, modern browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:wasmJsBrowserDevelopmentRun
-    ```
-- for the JS target (slower, supports older browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :composeApp:jsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :composeApp:jsBrowserDevelopmentRun
-    ```
+macOS/Linux:
 
-### Build and Run iOS Application
+```shell
+./gradlew :server:bootRun
+```
 
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+Windows:
 
----
+```shell
+.\gradlew.bat :server:bootRun
+```
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+The server starts on port `8080` by default.
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+## Endpoints
+
+- `GET /` returns a plain-text server status message.
+- `GET /health` returns a simple health payload.
+
+## Test Server
+
+macOS/Linux:
+
+```shell
+./gradlew :server:test
+```
+
+Windows:
+
+```shell
+.\gradlew.bat :server:test
+```
+
+
+## Build and Run Android Application
+
+Use the Android Studio run configuration or build directly:
+
+```shell
+./gradlew :composeApp:assembleDebug
+```
+
+## Build and Run Desktop Application
+
+```shell
+./gradlew :composeApp:run
+```
+
+## Build and Run Web Application
+
+```shell
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+```
+
+## Build and Run iOS Application
+
+Open [`iosApp`](./iosApp) in Xcode and run the native shell app.
