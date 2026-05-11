@@ -69,6 +69,11 @@ jobs:
       - name: Install Android API 36 platform
         run: sdkmanager 'platforms;android-36'
 
+      - name: Install Linux packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot dpkg
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
