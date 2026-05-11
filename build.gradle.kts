@@ -1,6 +1,8 @@
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
+    // Keep shared plugin declarations at the root so Gradle loads each plugin
+    // once for the multi-module build. Without these apply-false aliases,
+    // Kotlin/JS can register Node.js root services twice when both composeApp
+    // and shared declare JS/Wasm targets.
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.composeHotReload) apply false
@@ -8,5 +10,6 @@ plugins {
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
-    alias(libs.plugins.ktor) apply false
+    alias(libs.plugins.springBoot) apply false
+    alias(libs.plugins.springDependencyManagement) apply false
 }
